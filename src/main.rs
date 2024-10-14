@@ -71,7 +71,7 @@ async fn main() -> std::io::Result<()> {
         App::new().service(
             // prefixes all resources and routes attached to it...
             web::scope("/api/v1")
-                // ...so this handles requests for `GET /app/index.html`
+                // ...so this handles requests for `GET /api/v1/status`
                 .route("/status", web::get().to(index)),
         )
     })
