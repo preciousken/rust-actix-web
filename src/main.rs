@@ -2,7 +2,6 @@ use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
 use serde_json::json;
 
 // constants
-#[derive(Serialize)]
 struct Response {
     status: bool,
     message: &'static str,
