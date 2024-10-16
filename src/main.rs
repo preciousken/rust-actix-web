@@ -1,37 +1,36 @@
-// Shared Mutable State
 
-use std::sync::Mutex;
 
-use actix_web::{web, App, HttpServer};
+use actix_web::{get, web, App, Error, HttpResponse, HttpServer,Either};
+use futures::{future::ok, stream::once};
 
-mod routes;
-use routes::*;
+type DiffResponse = Either<HttpResponse,Result<&'static str, Error>>;
 
-// async fn index(data: web::Data<AppStateWithCounter>) -> String {
-//     let mut counter = data.counter.lock().unwrap(); // <- get counter's MutexGuard
-//     *counter += 1; // <- access counter inside MutexGuard
 
-//     format!("Request number: {counter}") // <- response with count
-// }
+const is_variant:bool = true;
 
-struct AppStateWithCounter {
-    counter: Mutex<i32>, // <- Mutex is necessary to mutate safely across threads
+async fn index() -> DiffResponse {
+    if(is_variant){
+        Either::Left(HttpResponse::Ok().body("responded"))
+    }else{
+        Either::Right(Ok("ok response"))
+    }
+}
+
+
+
+#[get("/stream")]
+async fn stream() -> HttpResponse {
+    let body = once(ok::<_, Error>(web::Bytes::from_static(b"test")));
+
+    HttpResponse::Ok()
+        .content_type("application/json")
+        .streaming(body)
 }
 
 #[actix_web::main]
- async fn main() -> std::io::Result<()> {
-    // Note: web::Data created _outside_ HttpServer::new closure
-    let counter = web::Data::new(AppStateWithCounter {
-        counter: Mutex::new(0),
-    });
-
-    HttpServer::new(move || {
-        // move counter into the closure
-        App::new()
-            .app_data(counter.clone()) // <- register the created data
-            .route("/", web::get().to(index))
-    })
-    .bind(("127.0.0.1", 8080))?
-    .run()
-    .await
+async fn main() -> std::io::Result<()> {
+    HttpServer::new(|| App::new().service(stream))
+        .bind(("127.0.0.1", 8080))?
+        .run()
+        .await
 }
